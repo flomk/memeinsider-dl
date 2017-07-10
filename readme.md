@@ -3,7 +3,7 @@ A script to download [Meme Insider](https://memeinsider.co/) issues
 
 # Usage
 
-python3 memeinsider-dl.py *URL*
+    python3 memeinsider-dl.py URL
 
 
 # TODO
