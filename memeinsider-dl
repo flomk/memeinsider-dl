@@ -1,0 +1,129 @@
+#!/usr/bin/env python3
+
+import argparse
+import hashlib
+import json
+import re
+import random
+import requests
+import sys
+
+from utils import *
+from termcolor import cprint
+from requests.sessions import Session
+
+
+def _hash_check(url, issue_name):
+    headers = {"Range": "bytes=0-10000"}
+    r = requests.get(url, headers=headers).content
+    md5_hash = hashlib.md5(r).hexdigest()
+    with open('hashes.json', 'r') as json_hashes:
+        existing_hashes = json.load(json_hashes)
+    json_hashes.close()
+    values = []
+    for issue_hash in existing_hashes:
+        for k, v in issue_hash.items():
+            values.append(v)
+    if md5_hash not in values:
+        # print(md5_hash)
+        updated_hashes = existing_hashes.append({issue_name: md5_hash})
+        with open('hashes.json', "a") as json_file:
+            json_file.write(json.dumps(updated_hashes))
+        # print(existing_hashes)
+        log_success('[*] No hash conflicts')
+    else:
+        log_warn('[-] This issue has already been downloaded, stopping')
+        sys.exit()
+
+
+def _regex_from_to(start, end, text):
+    m = re.search("(?i)" + start + "([\S\s]+?)" + end, text).group(1)
+    return m
+
+
+def _download_webpage(url):
+    s = requests.Session()
+    headers = {
+        'Host': 'memeinsider.co',
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:55.0) Gecko/20100101 Firefox/55.0'
+    }
+    r = s.get(url, headers=headers).text
+    return r
+
+
+def _download_file(url):
+    s = requests.Session()
+    r = s.get(url).content
+    return r
+
+
+def _save_pdf(file_name, raw_file):
+    with open(f'{file_name}', 'wb') as pdf:
+        pdf.write(raw_file)
+        log_success('[*] Done')
+
+
+def get_latest_issue():
+    url = 'https://memeinsider.co/release/latest'
+    log_info('[+] Downloading webpage...')
+    webpage = _download_webpage(url)
+    issue_url = _regex_from_to("var url = \"", "\";", webpage)
+    title = issue_url.split('/')[-1]
+    log_info('[+] Checking file hashes against existing hashes')
+    _hash_check(issue_url, title)
+    log_info('[+] Downloading pdf...')
+    issue = _download_file(issue_url)
+    _save_pdf(title, issue)
+    '''save_issue(title, issue_url)
+    log_success('[*] Done')'''
+
+
+def meme(url):
+    log_info('[+] Downloading webpage...')
+    webpage = download(url)
+    if webpage:
+        log_success('[*] Successfully downloaded webpage!')
+    else:
+        log_error('[-] Error downloading webpage')
+    title = url.split('/')[-1]
+    issue_url = re_search('var url = ', ';', webpage)
+    log_info('[+] Downloading pdf...')
+    r = s.get(issue_url)
+    if r:
+        pass
+    else:
+        log_error('[-] Error downloading webpage')
+
+    with open(f'{title}', 'wb') as pdf:
+        pdf.write(r.content)
+        log_success('[*] Done')
+
+
+def main():
+    parser = argparse.ArgumentParser(description='Usage: memeinsider-dl [URL]')
+    # group.add_argument('url', help="url of issue to download",, action="store_true")
+
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('-i', '--issue', help="url of issue to download",
+                       action="store_true")
+    group.add_argument('-u', '--upload', help="upload to cloud storage",
+                       action="store_true")
+    group.add_argument('-l', '--latest', help="get the latest issue",
+                       action="store_true")
+
+    args = parser.parse_args()
+    # bleh = args.url
+    if args.latest:
+        get_latest_issue()
+
+
+if __name__ == '__main__':
+    print("""
+                                  _            _     __                    ____
+   ____ ___  ___  ____ ___  ___  (_)___  _____(_)___/ /__  _____      ____/ / /
+  / __ `__ \/ _ \/ __ `__ \/ _ \/ / __ \/ ___/ / __  / _ \/ ___/_____/ __  / /
+ / / / / / /  __/ / / / / /  __/ / / / (__  ) / /_/ /  __/ /  /_____/ /_/ / /
+/_/ /_/ /_/\___/_/ /_/ /_/\___/_/_/ /_/____/_/\__,_/\___/_/         \__,_/_/
+
+""")
+    main()
