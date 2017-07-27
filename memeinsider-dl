@@ -58,7 +58,6 @@ def _download_file(url):
 
 
 def _save_pdf(file_name, raw_file):
-    print(file_name)
     with open(f'{file_name}', 'wb') as pdf:
         pdf.write(raw_file)
         log_success('[*] Done')
@@ -68,6 +67,8 @@ def get_latest_issue():
     url = 'https://memeinsider.co/release/latest'
     log_info('[+] Downloading webpage...')
     webpage = _download_webpage(url)
+    if not webpage:
+        log_error('[-] Error downloading webpage')
     issue_url = _regex_from_to("var url = \"", "\";", webpage)
     title = issue_url.split('/')[-1]
     log_info('[+] Checking file hashes against existing hashes')
