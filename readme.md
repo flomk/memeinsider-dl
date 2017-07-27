@@ -1,9 +1,14 @@
 # memeinsider-dl
 A script to download [Meme Insider](https://memeinsider.co/) issues
 
+# Installation
+    git clone https://github.com/flomk/memeinsider-dl $HOME/.memeinsider-dl
+    echo PATH="$HOME/.memeinsider-dl:${PATH}" >> ~/.zshrc
+    source ~/.zshrc
+
 # Usage
 
-    python3 memeinsider-dl.py URL
+    memeinsider-dl -l
 
 
 # TODO
