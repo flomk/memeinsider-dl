@@ -58,6 +58,7 @@ def _download_file(url):
 
 
 def _save_pdf(file_name, raw_file):
+    print(file_name)
     with open(f'{file_name}', 'wb') as pdf:
         pdf.write(raw_file)
         log_success('[*] Done')
@@ -83,8 +84,8 @@ def download_specific_issue(url):
     webpage = _download_webpage(url)
     if not webpage:
         log_error('[-] Error downloading webpage')
-    title = url.split('/')[-1]
     issue_url = _regex_from_to("var url = \"", "\";", webpage)
+    title = issue_url.split('/')[-1]
     log_info('[+] Downloading pdf...')
     issue = _download_file(issue_url)
     if not issue:
