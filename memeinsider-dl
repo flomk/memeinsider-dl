@@ -78,25 +78,18 @@ def get_latest_issue():
     log_success('[*] Done')'''
 
 
-def meme(url):
+def download_specific_issue(url):
     log_info('[+] Downloading webpage...')
-    webpage = download(url)
-    if webpage:
-        log_success('[*] Successfully downloaded webpage!')
-    else:
+    webpage = _download_webpage(url)
+    if not webpage:
         log_error('[-] Error downloading webpage')
     title = url.split('/')[-1]
-    issue_url = re_search('var url = ', ';', webpage)
+    issue_url = _regex_from_to("var url = \"", "\";", webpage)
     log_info('[+] Downloading pdf...')
-    r = s.get(issue_url)
-    if r:
-        pass
-    else:
+    issue = _download_file(issue_url)
+    if not issue:
         log_error('[-] Error downloading webpage')
-
-    with open(f'{title}', 'wb') as pdf:
-        pdf.write(r.content)
-        log_success('[*] Done')
+    _save_pdf(title, issue)
 
 
 def main():
@@ -104,8 +97,8 @@ def main():
     # group.add_argument('url', help="url of issue to download",, action="store_true")
 
     group = parser.add_mutually_exclusive_group()
-    group.add_argument('-i', '--issue', help="url of issue to download",
-                       action="store_true")
+    group.add_argument('-i', '--issue', dest='url', help="url of issue to download",
+                       action="store")
     group.add_argument('-u', '--upload', help="upload to cloud storage",
                        action="store_true")
     group.add_argument('-l', '--latest', help="get the latest issue",
@@ -115,6 +108,9 @@ def main():
     # bleh = args.url
     if args.latest:
         get_latest_issue()
+    
+    if args.url:
+        download_specific_issue(args.url)
 
 
 if __name__ == '__main__':
