@@ -10,30 +10,6 @@ import sys
 
 from utils import *
 from termcolor import cprint
-from requests.sessions import Session
-
-
-def _hash_check(url, issue_name):
-    headers = {"Range": "bytes=0-10000"}
-    r = requests.get(url, headers=headers).content
-    md5_hash = hashlib.md5(r).hexdigest()
-    with open('hashes.json', 'r') as json_hashes:
-        existing_hashes = json.load(json_hashes)
-    json_hashes.close()
-    values = []
-    for issue_hash in existing_hashes:
-        for k, v in issue_hash.items():
-            values.append(v)
-    if md5_hash not in values:
-        # print(md5_hash)
-        updated_hashes = existing_hashes.append({issue_name: md5_hash})
-        with open('hashes.json', "a") as json_file:
-            json_file.write(json.dumps(updated_hashes))
-        # print(existing_hashes)
-        log_success('[*] No hash conflicts')
-    else:
-        log_warn('[-] This issue has already been downloaded, stopping')
-        sys.exit()
 
 
 def _regex_from_to(start, end, text):
@@ -71,13 +47,11 @@ def get_latest_issue():
         log_error('[-] Error downloading webpage')
     issue_url = _regex_from_to("var url = \"", "\";", webpage)
     title = issue_url.split('/')[-1]
-    log_info('[+] Checking file hashes against existing hashes')
-    _hash_check(issue_url, title)
     log_info('[+] Downloading pdf...')
     issue = _download_file(issue_url)
+    if not issue:
+        log_error('[-] Error downloading pdf')
     _save_pdf(title, issue)
-    '''save_issue(title, issue_url)
-    log_success('[*] Done')'''
 
 
 def download_specific_issue(url):
@@ -90,13 +64,12 @@ def download_specific_issue(url):
     log_info('[+] Downloading pdf...')
     issue = _download_file(issue_url)
     if not issue:
-        log_error('[-] Error downloading webpage')
+        log_error('[-] Error downloading pdf')
     _save_pdf(title, issue)
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Usage: memeinsider-dl [URL]')
-    # group.add_argument('url', help="url of issue to download",, action="store_true")
+    parser = argparse.ArgumentParser(description='A cli program to download MemeInsider issues')
 
     group = parser.add_mutually_exclusive_group()
     group.add_argument('-i', '--issue', dest='url', help="url of issue to download",
@@ -107,10 +80,8 @@ def main():
                        action="store_true")
 
     args = parser.parse_args()
-    # bleh = args.url
     if args.latest:
         get_latest_issue()
-    
     if args.url:
         download_specific_issue(args.url)
 
